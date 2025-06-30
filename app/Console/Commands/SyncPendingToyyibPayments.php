@@ -1,9 +1,10 @@
 <?php
 
 namespace App\Console\Commands;
-
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use App\Models\Pendaftaran;
 use App\Models\Payment;
 
@@ -14,50 +15,68 @@ class SyncPendingToyyibPayments extends Command
 
     public function handle()
     {
-        $pendaftarans = Pendaftaran::where('is_paid', false)->get();
-        $secretKey = env('TOYYIBPAY_SECRET_KEY');
+        $this->info('🔄 Checking unpaid records...');
 
-        $this->info("🔄 Checking " . $pendaftarans->count() . " unpaid records...");
+        $unpaid = DB::table('pendaftarans')->where('is_paid', 0)->get();
 
-        foreach ($pendaftarans as $pendaftar) {
-            $billCode = $pendaftar->bill_code;
+        $this->info("🔍 Found {$unpaid->count()} unpaid records.");
 
-            if (!$billCode) {
-                $this->warn("⚠️ No bill_code for ID {$pendaftar->id}");
+        foreach ($unpaid as $record) {
+            if (!$record->bill_code) {
+                \Log::warning("⚠️ No bill_code for ID {$record->id}");
                 continue;
             }
 
-            $response = Http::asForm()->post('https://toyyibpay.com/index.php/api/getBillTransactions', [
-                'billCode' => $billCode,
-                'userSecretKey' => $secretKey,
-            ]);
+            $this->line("🔁 Syncing bill_code: {$record->bill_code}");
 
-            if (!$response->ok()) {
-                $this->error("❌ Failed to query billCode: {$billCode}");
-                continue;
-            }
-
-            $transactions = $response->json();
-            if (!empty($transactions) && isset($transactions[0]['status']) && $transactions[0]['status'] == '1') {
-                $pendaftar->is_paid = true;
-                $pendaftar->save();
-
-                $this->info("✅ Marked paid: {$pendaftar->nama} [{$billCode}]");
-
-                // Optional: store transaction details
-                Payment::create([
-                    'billcode' => $billCode,
-                    'refno' => $transactions[0]['refNo'] ?? null,
-                    'status' => 1,
-                    'amount' => $transactions[0]['amount'] ?? null,
-                    'paydate' => $transactions[0]['paydate'] ?? null,
-                    'transaction_data' => json_encode($transactions[0]),
+            try {
+                $response = Http::asForm()->post('https://dev.toyyibpay.com/index.php/api/getBillTransactions', [
+                    'billCode' => $record->bill_code,
+                    'secretKey' => config('toyyibpay.secret_key'),
                 ]);
-            } else {
-                $this->line("⏳ Still unpaid: {$pendaftar->nama} [{$billCode}]");
+
+                $transactions = $response->json();
+
+                \Log::info("📦 API response for {$record->bill_code}: " . json_encode($transactions));
+
+                if (!is_array($transactions) || empty($transactions)) {
+                    \Log::warning("⚠️ No valid transactionStatus found for {$record->bill_code}");
+                    continue;
+                }
+
+                // Get successful transaction (billpaymentStatus = 1)
+                $successTxn = collect($transactions)->firstWhere('billpaymentStatus', '1');
+
+                if (!$successTxn) {
+                    \Log::warning("⚠️ No successful payment for {$record->bill_code}");
+                    continue;
+                }
+
+                // Attempt to extract student name
+                $studentName = $successTxn['billTo'] ?? 'Unknown';
+
+                if ($studentName === 'Unknown' && !empty($successTxn['billDescription'])) {
+                    if (preg_match('/Peserta:\s(.+?)\s\(/', $successTxn['billDescription'], $matches)) {
+                        $studentName = $matches[1];
+                    }
+                }
+
+                // Mark payment as paid
+                DB::table('pendaftarans')
+                    ->where('id', $record->id)
+                    ->update([
+                        'is_paid' => 1,
+                        'updated_at' => now(),
+                    ]);
+
+                $this->info("✅ Marked as paid: {$studentName} ({$record->bill_code})");
+
+            } catch (\Exception $e) {
+                \Log::error("❌ Error syncing bill_code {$record->bill_code}: " . $e->getMessage());
+                $this->error("❌ Failed for {$record->bill_code}");
             }
         }
 
-        $this->info("✅ Done syncing.");
+        $this->info('🎉 Sync complete.');
     }
 }
