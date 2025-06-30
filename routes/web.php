@@ -12,7 +12,12 @@ Route::get('/', function () {
 Route::get('/daftar', [PendaftaranController::class, 'create'])->name('daftar.create');
 Route::post('/daftar', [PendaftaranController::class, 'store'])->name('daftar.store');
 Route::get('/resit', [PendaftaranController::class, 'receipt'])->name('daftar.resit');
-Route::post('/toyyibpay-callback', [PendaftaranController::class, 'callback'])->name('toyyibpay.callback');
+
+Route::get('/receipt', [PendaftaranController::class, 'receipt'])->name('receipt');
+Route::post('/toyyibpay/callback', [PendaftaranController::class, 'callback'])->name('toyyibpay.callback');
+
+#Route::get('/receipt/{billcode}', [ReceiptController::class, 'show'])->name('receipt.show');
+#Route::post('/toyyibpay-callback', [PendaftaranController::class, 'callback'])->name('toyyibpay.callback');
 
 Route::get('/student-suggest', [StudentSuggestController::class, 'suggest'])
     ->name('suggest.student');

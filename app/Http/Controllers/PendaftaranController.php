@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use App\Models\Pendaftaran;
+use App\Models\WebhookLog;
 
 class PendaftaranController extends Controller
 {
@@ -104,7 +105,7 @@ class PendaftaranController extends Controller
         $pendaftaran = Pendaftaran::where('bill_code', $billCode)->first();
 
         if (!$pendaftaran) {
-            return view('receipt')->with('error', 'Rekod tidak dijumpai.');
+            return view('receipt')->with('error', 'Rekod pembayaran sedang disemak. Sila maklumkan kepada Guru yang bertugas.');
         }
 
         return view('receipt', ['pendaftaran' => $pendaftaran]);
@@ -112,10 +113,15 @@ class PendaftaranController extends Controller
 
     public function callback(Request $request)
     {
-        \Log::info('ToyyibPay Callback Payload:', $request->all());
+        // Log webhook call
+        WebhookLog::create([
+            'bill_code' => $request->input('billcode'),
+            'payload'   => json_encode($request->all())
+        ]);
 
+        // Update status in pendaftarans table
         $billCode = $request->input('billcode');
-        $paymentStatus = $request->input('status'); // 1 = paid
+        $paymentStatus = $request->input('status'); // 1 = Paid
 
         $pendaftaran = Pendaftaran::where('bill_code', $billCode)->first();
 
