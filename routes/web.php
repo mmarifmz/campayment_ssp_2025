@@ -21,3 +21,5 @@ Route::post('/toyyibpay/callback', [PendaftaranController::class, 'callback'])->
 
 Route::get('/student-suggest', [StudentSuggestController::class, 'suggest'])
     ->name('suggest.student');
+
+Route::get('/senarai-peserta', [PendaftaranController::class, 'listPaid'])->name('participants.list');

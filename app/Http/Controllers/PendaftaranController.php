@@ -108,20 +108,36 @@ class PendaftaranController extends Controller
             return view('receipt')->with('error', 'Rekod tidak dijumpai.');
         }
 
-        // Call ToyyibPay API only if not yet marked as paid
+        // Only call ToyyibPay API if not yet paid
         if (!$pendaftaran->is_paid) {
-            $response = Http::asForm()->post('https://toyyibpay.com/index.php/api/getBillTransactions', [
-                'billCode' => $billCode
-            ]);
+            try {
+                $response = Http::asForm()->post('https://toyyibpay.com/index.php/api/getBillTransactions', [
+                    'billCode' => $billCode
+                ]);
 
-            $transactions = $response->json();
+                $transactions = $response->json();
 
-            if (!empty($transactions) && $transactions[0]['status'] === '1') {
-                // ✅ Update local record
-                $pendaftaran->is_paid = true;
-                $pendaftaran->save();
+                if (is_array($transactions)) {
+                    // ✅ Look for at least one successful payment
+                    foreach ($transactions as $txn) {
+                        if (isset($txn['billpaymentStatus']) && $txn['billpaymentStatus'] == '1') {
+                            // ✅ Log this successful payment
+                            DB::table('webhook_logs')->insert([
+                                'bill_code' => $billCode,
+                                'payload' => json_encode($txn),
+                                'source' => 'receipt-check',
+                                'created_at' => now(),
+                            ]);
 
-                // (Optional) store details in webhook log table if you created one
+                            // ✅ Update local status
+                            $pendaftaran->is_paid = true;
+                            $pendaftaran->save();
+                            break;
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                \Log::error("ToyyibPay API error for $billCode: " . $e->getMessage());
             }
         }
 
@@ -130,23 +146,39 @@ class PendaftaranController extends Controller
 
     public function callback(Request $request)
     {
-        // Log webhook call
-        WebhookLog::create([
-            'bill_code' => $request->input('billcode'),
-            'payload'   => json_encode($request->all())
-        ]);
+        Log::info('ToyyibPay Callback Received', $request->all());
 
-        // Update status in pendaftarans table
-        $billCode = $request->input('billcode');
-        $paymentStatus = $request->input('status'); // 1 = Paid
+        $billCode = $request->get('billcode');
+
+        if (!$billCode) {
+            Log::warning("Callback missing billcode");
+            return response('No billcode', 400);
+        }
 
         $pendaftaran = Pendaftaran::where('bill_code', $billCode)->first();
 
-        if ($pendaftaran && $paymentStatus == '1') {
-            $pendaftaran->is_paid = true;
-            $pendaftaran->save();
+        if (!$pendaftaran) {
+            Log::warning("Callback billcode not found: " . $billCode);
+            return response('Not found', 404);
         }
 
-        return response()->json(['status' => 'received']);
+        $pendaftaran->is_paid = true;
+        $pendaftaran->save();
+
+        Log::info("Payment marked as paid for bill_code: " . $billCode);
+
+        return response('OK', 200);
+    }
+
+    public function listPaid()
+    {
+        $peserta = Pendaftaran::where('is_paid', 1)
+            ->orderBy('jawatan')
+            ->orderByRaw("CAST(SUBSTRING_INDEX(kelas, ' ', 1) AS UNSIGNED) DESC")
+            ->orderBy('kelas')
+            ->get()
+            ->groupBy('jawatan');
+
+        return view('participants.list', compact('peserta'));
     }
 }
