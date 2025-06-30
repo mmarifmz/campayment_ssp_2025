@@ -95,25 +95,31 @@
     }
   }
 
-  /* Modal style */
   .modal {
     display: none;
     position: fixed;
-    z-index: 2000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.9);
+    z-index: 9999;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    justify-content: center;
+    align-items: center;
   }
+
+  .modal.show {
+    display: flex; /* use flex to center content */
+  }
+
   .modal-content {
-    margin: auto;
-    display: block;
     max-width: 90vw;
-    max-height: 90vh;
+    max-height: 85vh;
+    width: auto;
+    height: auto;
+    object-fit: contain;
     border-radius: 10px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.6);
+    z-index: 10001;
   }
+
   .modal-close {
     position: absolute;
     top: 20px;
@@ -122,6 +128,7 @@
     font-size: 32px;
     font-weight: bold;
     cursor: pointer;
+    z-index: 10002;
   }
 </style>
 
@@ -137,14 +144,14 @@
 <div class="carousel-container">
   <div class="carousel-3d">
     <img src="{{ asset('images/kem-1.jpeg') }}" alt="Poster 1" onclick="openModal(this.src)">
-    <img src="{{ asset('images/kem-2.jpeg') }}" alt="Poster 2" onclick="openModal(this.src)">
     <img src="{{ asset('images/kem-3.jpeg') }}" alt="Poster 3" onclick="openModal(this.src)">
+    <img src="{{ asset('images/kem-2.jpeg') }}" alt="Poster 2" onclick="openModal(this.src)">
   </div>
 </div>
 
 <div id="imgModal" class="modal">
   <span class="modal-close" onclick="closeModal()">&times;</span>
-  <img class="modal-content" id="modalImage">
+  <img class="modal-content" id="modalImage" alt="Preview">
 </div>
 
 <script>
@@ -170,11 +177,15 @@
   setInterval(updateCountdown, 1000);
 
   function openModal(src) {
-    document.getElementById('imgModal').style.display = 'block';
-    document.getElementById('modalImage').src = src;
+    const modal = document.getElementById("imgModal");
+    const modalImage = document.getElementById("modalImage");
+    modalImage.src = src;
+    modal.classList.add("show");
   }
+
   function closeModal() {
-    document.getElementById('imgModal').style.display = 'none';
+    const modal = document.getElementById("imgModal");
+    modal.classList.remove("show");
   }
 </script>
 @endsection
