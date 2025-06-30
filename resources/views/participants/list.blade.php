@@ -3,12 +3,12 @@
 @section('content')
 <div class="container py-4">
     <h2 class="text-center fw-bold mb-5">Kem Kepimpinan SSP 2025 </h2>
-    <h5 class="text-center fw-bold mb-5">Senarai Peserta Telah Membayar</h5>
+    <h5 class="text-center fw-bold mb-5">Senarai {{ $peserta->flatten()->count() }} Peserta Telah Membayar</h5>
     @foreach ($peserta as $jawatan => $group)
         <div class="mb-4">
             <div class="flex items-center justify-between mb-3">
                 <h3 class="text-xl font-semibold text-blue-800 border-b border-gray-300 pb-1">
-                    {{ $jawatan }}
+                    {{ $jawatan }} <span class="text-success">[{{ count($group) }}]
                 </h3>
                 <button class="btn btn-sm btn-outline-primary" onclick="copyToClipboard('copy-{{ \Str::slug($jawatan) }}')">
                     📋 Salin Senarai
