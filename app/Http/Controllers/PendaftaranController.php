@@ -61,14 +61,14 @@ class PendaftaranController extends Controller
         ]);
 
         $billData = [
-            'userSecretKey'          => env('TOYYIBPAY_SECRET_KEY'),
-            'categoryCode'           => env('TOYYIBPAY_CATEGORY_CODE'),
+            'userSecretKey'          => config('services.toyyibpay.secret_key'),
+            'categoryCode'           => config('services.toyyibpay.category_code'),
             'billName'               => 'Kursus Kepimpinan SSP 2025',
             'billDescription'        => "Peserta: {$request->nama} ({$request->kelas})",
             'billPriceSetting'       => 1,
             'billPayorInfo'          => 1,
             'billAmount'             => $totalAmountSen,
-            'billReturnUrl'          => env('TOYYIBPAY_RETURN_URL'),
+            'billReturnUrl'          => config('services.toyyibpay.return_url'),
             'billCallbackUrl'        => route('toyyibpay.callback'),
             'billExternalReferenceNo'=> $billRef,
             'billTo'                 => $request->nama,
