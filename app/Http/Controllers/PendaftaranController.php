@@ -105,7 +105,24 @@ class PendaftaranController extends Controller
         $pendaftaran = Pendaftaran::where('bill_code', $billCode)->first();
 
         if (!$pendaftaran) {
-            return view('receipt')->with('error', 'Rekod pembayaran sedang disemak. Sila maklumkan kepada Guru yang bertugas.');
+            return view('receipt')->with('error', 'Rekod tidak dijumpai.');
+        }
+
+        // Call ToyyibPay API only if not yet marked as paid
+        if (!$pendaftaran->is_paid) {
+            $response = Http::asForm()->post('https://toyyibpay.com/index.php/api/getBillTransactions', [
+                'billCode' => $billCode
+            ]);
+
+            $transactions = $response->json();
+
+            if (!empty($transactions) && $transactions[0]['status'] === '1') {
+                // ✅ Update local record
+                $pendaftaran->is_paid = true;
+                $pendaftaran->save();
+
+                // (Optional) store details in webhook log table if you created one
+            }
         }
 
         return view('receipt', ['pendaftaran' => $pendaftaran]);
