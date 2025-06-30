@@ -30,7 +30,7 @@ class SyncPendingToyyibPayments extends Command
             $this->line("🔁 Syncing bill_code: {$record->bill_code}");
 
             try {
-                $response = Http::asForm()->post('https://dev.toyyibpay.com/index.php/api/getBillTransactions', [
+                $response = Http::asForm()->post('https://toyyibpay.com/index.php/api/getBillTransactions', [
                     'billCode' => $record->bill_code,
                     'secretKey' => config('toyyibpay.secret_key'),
                 ]);
