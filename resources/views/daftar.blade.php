@@ -51,6 +51,11 @@
     margin-right: 10px;
     margin-bottom: 10px;
   }
+
+  .modal ol {
+    list-style-type: decimal;
+    padding-left: 1.25rem;
+  }
 </style>
 
 <nav class="navbar d-flex justify-content-between align-items-center">
@@ -69,30 +74,12 @@
       <div class="row g-3">
         <div class="col-md-6">
           <label class="form-label">Nama Peserta (Pelajar)</label>
-          <input type="text" name="nama" class="form-control" data-message="Sila isikan Nama Peserta" required>
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">No MyKid Peserta (Pelajar)</label>
-          <input type="text" name="ic" class="form-control" inputmode="numeric" maxlength="14" pattern="\d{6}-\d{2}-\d{4}" placeholder="000000-00-0000" data-message="Sila isikan No Kad Pengenalan" required>
-        </div>
-
-        <div class="col-md-6">
-          <label class="form-label">Jawatan Peserta</label>
-          <select name="jawatan" class="form-select" required>
-            <option value="">Pilih Jawatan</option>
-            <option value="Pengawas Sekolah">Pengawas Sekolah</option>
-            <option value="Pengawas Pusat Sumber">Pengawas Pusat Sumber</option>
-            <option value="Pembimbing Rakan Sebaya">Pembimbing Rakan Sebaya</option>
-            <option value="Quartermaster">Quartermaster</option>
-            <option value="Ketua Kelas">Ketua Kelas</option>
-            <option value="Penolong Ketua Kelas">Penolong Ketua Kelas</option>
-            <option value="Lain-lain">Lain-lain</option>
-          </select>
+          <input type="text" name="nama" id="nama" class="form-control" data-message="Sila isikan Nama Peserta" placeholder="Nama Peserta" required>
         </div>
 
         <div class="col-md-6">
           <label class="form-label">Kelas Peserta</label>
-          <select name="kelas" class="form-select" required>
+          <select name="kelas" id="kelas" class="form-select" required>
             <option value="">Pilih Kelas</option>
             <option value="3 AKASIA">3 AKASIA</option>
             <option value="3 ALAMANDA">3 ALAMANDA</option>
@@ -114,6 +101,53 @@
             <option value="6 ANGGERIK">6 ANGGERIK</option>
             <option value="6 ANGSANA">6 ANGSANA</option>
             <option value="6 AZALEA">6 AZALEA</option>
+          </select>
+        </div>
+
+        <script>
+        $(function() {
+            $("#nama").autocomplete({
+                source: function(request, response) {
+                    $.ajax({
+                        url: "{{ route('suggest.student') }}",
+                        data: { term: request.term },
+                        success: function(data) {
+                            response($.map(data, function(item) {
+                                return {
+                                    label: item.student_name + " (" + item.class_name + ")",
+                                    value: item.student_name,
+                                    kelas: item.class_name
+                                };
+                            }));
+                        }
+                    });
+                },
+                minLength: 2,
+                select: function(event, ui) {
+                    $('#nama').val(ui.item.value);
+                    $('#kelas').val(ui.item.kelas); // still sets the dropdown
+                    return false;
+                }
+            });
+        });
+        </script>
+
+        <div class="col-md-6">
+          <label class="form-label">No MyKid Peserta (Pelajar)</label>
+          <input type="text" name="ic" class="form-control" inputmode="numeric" maxlength="14" pattern="\d{6}-\d{2}-\d{4}" placeholder="000000-00-0000" data-message="Sila isikan No Kad Pengenalan" required>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Jawatan Peserta</label>
+          <select name="jawatan" class="form-select" required>
+            <option value="">Pilih Jawatan</option>
+            <option value="Pengawas Sekolah">Pengawas Sekolah</option>
+            <option value="Pengawas Pusat Sumber">Pengawas Pusat Sumber</option>
+            <option value="Pembimbing Rakan Sebaya">Pembimbing Rakan Sebaya</option>
+            <option value="Quartermaster">Quartermaster</option>
+            <option value="Ketua Kelas">Ketua Kelas</option>
+            <option value="Penolong Ketua Kelas">Penolong Ketua Kelas</option>
+            <option value="Lain-lain">Lain-lain</option>
           </select>
         </div>
 
@@ -140,6 +174,13 @@
           </select>
         </div>
 
+        <div class="col-md-12">
+          <label class="form-label">Alergik Makanan / Masalah Kesihatan</label>
+          <textarea name="alergik" rows="3" class="form-control" placeholder="Sila nyatakan jika ada alergik terhadap makanan tertentu atau masalah kesihatan"></textarea>
+        </div>
+
+        <h5 class="form-section-title">Butiran Ibu/Bapa/Penjaga</h5>
+
         <div class="col-md-6">
           <label class="form-label">No Tel Ibu Bapa / Penjaga</label>
           <input type="text" name="telefon" class="form-control" placeholder="000-0000-0000" data-message="Sila isikan No Tel Ibu Bapa" required>
@@ -150,24 +191,25 @@
           <small class="form-text text-muted">Resit transaksi akan dihantar ke email ini</small>
         </div>
 
-        
 
         <div class="col-md-12">
-          <label class="form-label">Alergik Makanan / Masalah Kesihatan</label>
-          <textarea name="alergik" rows="3" class="form-control" placeholder="Sila nyatakan jika ada alergik terhadap makanan tertentu atau masalah kesihatan"></textarea>
-        </div>
-
-        <div class="col-md-12">
-          <label class="form-label">Sumbangan Ikhlas (Pilihan)</label>
+          <label class="form-label">Sumbangan Ikhlas</label><br/>
+          <small class="form-text text-muted">Jumlah sumbangan adalah atas budi bicara dan keikhlasan ibu bapa.</small>
           <div class="sumbangan-buttons mb-2">
-            <button type="button" class="btn btn-outline-secondary" onclick="setSumbangan(20)">20</button>
-            <button type="button" class="btn btn-outline-secondary" onclick="setSumbangan(50)">50</button>
-            <button type="button" class="btn btn-outline-secondary" onclick="setSumbangan(100)">100</button>
-            <button type="button" class="btn btn-outline-secondary" onclick="setSumbangan(200)">200</button>
-            <button type="button" class="btn btn-outline-secondary" onclick="setSumbangan(500)">500</button>
+            <button type="button" class="btn btn-outline-secondary" onclick="setSumbangan(20)">+ RM 20</button>
+            <button type="button" class="btn btn-outline-secondary" onclick="setSumbangan(50)">+ RM 50</button>
+            <button type="button" class="btn btn-outline-secondary" onclick="setSumbangan(100)">+ RM 100</button>
+            <button type="button" class="btn btn-outline-secondary" onclick="setSumbangan(200)">+ RM 200</button>
             <button type="button" class="btn btn-outline-danger" onclick="setSumbangan(0)">Reset</button>
           </div>
           <input type="number" name="sumbangan" id="sumbangan" class="form-control" min="0" value="0" placeholder="Contoh: 10">
+        </div>
+
+        <div class="form-check mt-4">
+          <input class="form-check-input" type="checkbox" id="termsCheckbox" value="1" id="agreeTerms" required>
+          <label class="form-check-label" for="agreeTerms">
+            Saya bersetuju dengan <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terma dan Syarat</a>.
+          </label>
         </div>
 
         <div class="col-md-12 mt-4">
@@ -175,17 +217,53 @@
         </div>
       </div>
     </form>
+
+    <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="termsModalLabel">Terma dan Syarat</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+          </div>
+          <div class="modal-body">
+            <ol class="ps-3">
+              <li>Pembayaran yang telah dibuat tidak akan dikembalikan.</li>
+              <li>Peserta bertanggungjawab untuk memastikan maklumat yang diberikan adalah tepat dan benar.</li>
+              <li>Pihak penganjur berhak untuk mengubah jadual program tanpa notis terlebih dahulu.</li>
+              <li>Peserta dikehendaki mematuhi segala peraturan yang telah ditetapkan oleh pihak penganjur.</li>
+              <li>Pihak penganjur tidak bertanggungjawab atas sebarang kehilangan atau kerosakan harta benda peserta.</li>
+              <li>Peserta yang mempunyai masalah kesihatan perlu memaklumkan kepada pihak penganjur sebelum program bermula.</li>
+              <li>Pihak penganjur berhak untuk mengambil gambar atau video semasa program untuk tujuan dokumentasi dan promosi.</li>
+              <li>Sebarang perubahan maklumat peserta perlu dimaklumkan kepada pihak penganjur sekurang-kurangnya 7 hari sebelum program bermula.</li>
+            </ol>
+          </div>
+          <!-- Modal Footer -->
+            <div class="modal-footer">
+              <button id="agreeButton" class="btn btn-success">Saya Faham & Setuju</button>
+            </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
 <div class="summary-box text-center">
-  <h6 class="mb-1">Ringkasan Pembayaran</h6>
+  <h6 class="mb-1 fw-bold">Ringkasan Pembayaran</h6>
   <p class="mb-0 text-muted">Yuran Penginapan dan Makanan</p>
   <strong class="fs-5" id="total-amount">RM 190.00</strong>
 </div>
 
 <script>
+  document.getElementById('agreeButton').addEventListener('click', function () {
+    // Close modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('termsModal'));
+    modal.hide();
 
+    // Check the checkbox
+    document.getElementById('termsCheckbox').checked = true;
+  });
+  
   document.addEventListener("DOMContentLoaded", function () {
     const form = document.querySelector("form");
 

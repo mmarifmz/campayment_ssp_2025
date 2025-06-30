@@ -16,7 +16,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => env('DB_CONNECTION', 'mysql'),
 
     /*
     |--------------------------------------------------------------------------
@@ -110,6 +110,20 @@ return [
             'prefix_indexes' => true,
             // 'encrypt' => env('DB_ENCRYPT', 'yes'),
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
+        ],
+
+        'yuranpibg' => [
+            'driver' => 'mysql',
+            'host' => env('DB_YURAN_HOST', '127.0.0.1'),
+            'port' => env('DB_YURAN_PORT', '8889'),
+            'database' => env('DB_YURAN_DATABASE', ''),
+            'username' => env('DB_YURAN_USERNAME', ''),
+            'password' => env('DB_YURAN_PASSWORD', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => true,
+            'engine' => null,
         ],
 
     ],
