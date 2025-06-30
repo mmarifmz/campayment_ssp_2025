@@ -103,7 +103,7 @@ class PendaftaranController extends Controller
         }
 
         $pendaftaran = Pendaftaran::where('bill_code', $billCode)->first();
-
+        \Log::info('📦 Receipt Lookup:', ['billCode' => $billCode, 'result' => $pendaftaran]);
         if (!$pendaftaran) {
             return view('receipt')->with('error', 'Rekod tidak dijumpai.');
         }
@@ -141,7 +141,18 @@ class PendaftaranController extends Controller
             }
         }
 
-        return view('receipt', ['pendaftaran' => $pendaftaran]);
+            // Check if payment is complete
+            if ($pendaftaran->is_paid) {
+                return view('receipt', [
+                    'pendaftaran' => $pendaftaran,
+                    'paid' => true
+                ]);
+            }
+
+            return view('receipt', [
+                'pendaftaran' => $pendaftaran,
+                'pending' => true
+            ]);
     }
 
     public function callback(Request $request)

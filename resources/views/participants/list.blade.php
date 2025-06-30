@@ -31,7 +31,8 @@ Senarai Peserta Kem Kepimpinan SSP 2025
                         <div class="card shadow-sm h-100">
                             <div class="card-body py-2 px-3">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="card-title fw-semibold mb-1 text-uppercase">{{ strtoupper($p->nama) }}</h6>
+                                    <a href="{{ route('receipt', ['billcode' => $p->bill_code]) }}" target="_blank" rel="noopener noreferrer">
+                                    <h6 class="card-title fw-semibold mb-1 text-uppercase">{{ strtoupper($p->nama) }}</h6></a>
 <span class="badge bg-info text-dark">{{ $p->kelas }}</span>
                                 </div>
 
