@@ -138,7 +138,7 @@
     <div class="event-title">Kem Kepimpinan SK Sri Petaling 2025</div>
   </div>
   <div class="countdown-box" id="countdown">Loading countdown...</div>
-  <a href="{{ route('daftar.create') }}" class="daftar-button">Daftar Sekarang</a>
+  <a href="/senarai-peserta" class="daftar-button">Lihat Senarai Peserta Berdaftar</a>
 </div>
 
 <div class="carousel-container">
